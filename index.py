@@ -1,4 +1,4 @@
-index = """<!DOCTYPE html>
+index = r"""<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -60,23 +60,67 @@ index = """<!DOCTYPE html>
 </html>
 """
 
-link1_tag_pos = index.find("<a href")
-link1_first_quote_pos = index.find('"', link1_tag_pos)
-link1_second_quote_pos = index.find('"', link1_first_quote_pos + 1)
-link1 = index[link1_first_quote_pos + 1 : link1_second_quote_pos]
-index = index[link1_tag_pos + 1 : ]
+def get_page(url):
+    try:
+        import urllib.request
+        page = urllib.request.urlopen(url).read()
+        return page.decode("utf−8")
+    except:
+        return ""
+    
+# -------------------------------------------------------------------------
+# TO PREVENT SOME WEBSITES FROM BLOCKING A RESPONSE BACK
+# -------------------------------------------------------------------------
+# def get_page(url):
+#     try:
+#         import urllib.request
+#         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+#         req = urllib.request.Request(url, headers=headers)
+#         page = urllib.request.urlopen(req).read()
+#         return page.decode("utf-8")
+#     except Exception as e:
+#         print(f"Error: {e}")
+#         return ""
 
-link2_tag_pos = index.find("<a href")
-link2_first_quote_pos = index.find('"', link2_tag_pos)
-link2_second_quote_pos = index.find('"', link2_first_quote_pos + 1)
-link2 = index[link2_first_quote_pos + 1 : link2_second_quote_pos]
-index = index[link2_tag_pos + 1 : ]
+def get_next_target(page):
+    start_link = page.find("<a href=")
+    if start_link == -1:
+        return None, 0
+    start_quote = page.find('"', start_link)
+    end_quote = page.find('"', start_quote + 1)
+    url = page[start_quote + 1: end_quote]
+    return url, end_quote
 
-link3_tag_pos = index.find("<a href")
-link3_first_quote_pos = index.find('"', link3_tag_pos)
-link3_second_quote_pos = index.find('"', link3_first_quote_pos + 1)
-link3 = index[link3_first_quote_pos + 1 : link3_second_quote_pos]
+def get_all_links(page):
+    links = []
+    while True:
+        url, endpos = get_next_target(page)
+        if url:
+            links.append(url)
+            page = page[endpos + 1:]
+        else:
+            break
+    return links
 
-print("First link: " + link1)
-print("Second link: " + link2)
-print("Third link: " + link3)
+# print(get_all_links(index))
+
+def crawl_web(seed):
+    tocrawl = [seed]
+    print(tocrawl)
+    crawled = []
+    while tocrawl:
+        url = tocrawl.pop()
+        # print(url)
+        # print(get_page(url))
+        # print(get_all_links(get_page(url)))
+        if url not in crawled:
+            tocrawl = list(set(tocrawl).union(get_all_links(get_page(url))))
+            print("🎈")
+            print(tocrawl)
+            crawled.append(url)
+            print("✅")
+            print(crawled)
+    return crawled
+
+seed = "https://engoo.com/"
+crawl_web(seed)
