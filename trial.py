@@ -64,23 +64,120 @@ index = r"""<!DOCTYPE html>
 # FIRST TRY WITHOUT LOOPS
 # -------------------------------------------------------------------------
 
-link1_tag_pos = index.find("<a href")
-link1_first_quote_pos = index.find('"', link1_tag_pos)
-link1_second_quote_pos = index.find('"', link1_first_quote_pos + 1)
-link1 = index[link1_first_quote_pos + 1 : link1_second_quote_pos]
-index = index[link1_tag_pos + 1 : ]
+# link1_tag_pos = index.find("<a href")
+# link1_first_quote_pos = index.find('"', link1_tag_pos)
+# link1_second_quote_pos = index.find('"', link1_first_quote_pos + 1)
+# link1 = index[link1_first_quote_pos + 1 : link1_second_quote_pos]
+# index = index[link1_tag_pos + 1 : ]
 
-link2_tag_pos = index.find("<a href")
-link2_first_quote_pos = index.find('"', link2_tag_pos)
-link2_second_quote_pos = index.find('"', link2_first_quote_pos + 1)
-link2 = index[link2_first_quote_pos + 1 : link2_second_quote_pos]
-index = index[link2_tag_pos + 1 : ]
+# link2_tag_pos = index.find("<a href")
+# link2_first_quote_pos = index.find('"', link2_tag_pos)
+# link2_second_quote_pos = index.find('"', link2_first_quote_pos + 1)
+# link2 = index[link2_first_quote_pos + 1 : link2_second_quote_pos]
+# index = index[link2_tag_pos + 1 : ]
 
-link3_tag_pos = index.find("<a href")
-link3_first_quote_pos = index.find('"', link3_tag_pos)
-link3_second_quote_pos = index.find('"', link3_first_quote_pos + 1)
-link3 = index[link3_first_quote_pos + 1 : link3_second_quote_pos]
+# link3_tag_pos = index.find("<a href")
+# link3_first_quote_pos = index.find('"', link3_tag_pos)
+# link3_second_quote_pos = index.find('"', link3_first_quote_pos + 1)
+# link3 = index[link3_first_quote_pos + 1 : link3_second_quote_pos]
 
-print("First link: " + link1)
-print("Second link: " + link2)
-print("Third link: " + link3)
+# print("First link: " + link1)
+# print("Second link: " + link2)
+# print("Third link: " + link3)
+
+# -------------------------------------------------------------------------
+# SECOND TRY USING ATOMIC STRUCTURES
+# -------------------------------------------------------------------------
+
+def get_next_target(page):
+    start_link = page.find("<a href=")
+    if start_link == -1:
+        return None, 0
+    start_quote = page.find('"', start_link)
+    end_quote = page.find('"', start_quote + 1)
+    url = page[start_quote + 1: end_quote]
+    return url, end_quote
+
+def get_all_links(page):
+    links = []
+    while True:
+        url, endpos = get_next_target(page)
+        if url:
+            links.append(url)
+            page = page[endpos + 1:]
+        else:
+            break
+    return links
+
+# print(get_all_links(index))
+
+# -------------------------------------------------------------------------
+# INDEX
+# -------------------------------------------------------------------------
+
+# [[kw1, [url1, url2]], [kw2, [url2, url3]], ...]
+# [[..., [...]], [..., [...]], ...]
+
+# def add_to_index(index, kw):
+#     for element in index:
+#         if kw == element[0]:
+#             element[1] = list(set(element[1]).union([url]))
+#             return
+#     index.append([kw, [url]])
+#     return
+
+# add_to_index(my_index, "abc", "www.abc.com")
+# print(my_index)
+
+print(index.find("<body"))
+print(index[index.find("<body"):index.find("<body") + 6] == "</body")
+
+def split_content(page):
+    content = ""
+    start_tag = page.find("<body")
+    while True:
+        start_tag_bracket = page.find('>', start_tag)
+        end_tag_bracket = page.find('<', start_tag_bracket + 1)
+        content += page[start_tag_bracket + 1: end_tag_bracket]
+        page = page[end_tag_bracket:]
+        start_tag = 0
+        if page[0:6] == "</body":
+            break
+    return content
+
+content = split_content(index)
+print(content)
+
+content = content.split(" ")
+print(content)
+
+element = 0
+while element < len(content):
+    if content[element] == "" or content[element] == "\n":
+        content.remove(content[element])
+    else:
+        element += 1
+
+print(content)
+
+
+
+# def crawl_web(seed):
+#     tocrawl = [seed]
+#     # print(tocrawl)
+#     crawled = []
+#     index = []
+#     while tocrawl:
+#         url = tocrawl.pop()
+#         # print(url)
+#         # print(get_page(url))
+#         # print(get_all_links(get_page(url)))
+#         if url not in crawled:
+#             add_page_to_index(index, url)
+#             tocrawl = list(set(tocrawl).union(get_all_links(index)))
+#             # print("🎈")
+#             # print(tocrawl)
+#             crawled.append(url)
+#             # print("✅")
+#             # print(crawled)
+#     return crawled, index

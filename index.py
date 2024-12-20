@@ -60,27 +60,31 @@ index = r"""<!DOCTYPE html>
 </html>
 """
 
-def get_page(url):
-    try:
-        import urllib.request
-        page = urllib.request.urlopen(url).read()
-        return page.decode("utf−8")
-    except:
-        return ""
-    
 # -------------------------------------------------------------------------
-# TO PREVENT SOME WEBSITES FROM BLOCKING A RESPONSE BACK
+# HELPER PROCEDURES FOR WEB CRAWLER
 # -------------------------------------------------------------------------
+
 # def get_page(url):
 #     try:
 #         import urllib.request
-#         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-#         req = urllib.request.Request(url, headers=headers)
-#         page = urllib.request.urlopen(req).read()
-#         return page.decode("utf-8")
-#     except Exception as e:
-#         print(f"Error: {e}")
+#         page = urllib.request.urlopen(url).read()
+#         return page.decode("utf−8")
+#     except:
 #         return ""
+    
+# # -------------------------------------------------------------------------
+# # TO PREVENT SOME WEBSITES FROM BLOCKING A RESPONSE BACK
+# # -------------------------------------------------------------------------
+def get_page(url):
+    try:
+        import urllib.request
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+        req = urllib.request.Request(url, headers=headers)
+        page = urllib.request.urlopen(req).read()
+        return page.decode("utf-8")
+    except Exception as e:
+        print(f"Error: {e}")
+        return ""
 
 def get_next_target(page):
     start_link = page.find("<a href=")
@@ -101,26 +105,75 @@ def get_all_links(page):
         else:
             break
     return links
-
 # print(get_all_links(index))
+
+# -------------------------------------------------------------------------
+# INDEX
+# -------------------------------------------------------------------------
+
+# [[kw1, [url1, url2]], [kw2, [url2, url3]], ...]
+# [[..., [...]], [..., [...]], ...]
+
+# index = []
+
+print("🤔")
+# print(my_index[0])
+
+def add_to_index(index, kw, url):
+    for element in index:
+        if kw == element[0]:
+            element[1] = list(set(element[1]).union([url]))
+            return
+    index.append([kw, [url]])
+    return
+
+# add_to_index(my_index, "abc", "www.abc.com")
+# print(my_index)
+
+def add_page_to_index(index, url):
+    # print("🎈")
+    page = get_page(url)
+    content = page.split()
+    # print("🥇")
+    # print(content)
+    for element in content:
+        add_to_index(index, element, url)
+
+# print(get_page("https://engoo.com/").split())
+
+def look_up(my_index, kw):
+    for my_element in my_index:
+        if my_element[0] == kw:
+            return my_element[1]
+    return []
+# -------------------------------------------------------------------------
+# WEB CRAWLER
+# -------------------------------------------------------------------------
 
 def crawl_web(seed):
     tocrawl = [seed]
-    print(tocrawl)
+    # print(tocrawl)
     crawled = []
+    index = []
     while tocrawl:
         url = tocrawl.pop()
         # print(url)
         # print(get_page(url))
         # print(get_all_links(get_page(url)))
         if url not in crawled:
+            add_page_to_index(index, url)
             tocrawl = list(set(tocrawl).union(get_all_links(get_page(url))))
-            print("🎈")
-            print(tocrawl)
+            # print("🎈")
+            # print(tocrawl)
             crawled.append(url)
-            print("✅")
-            print(crawled)
-    return crawled
+            # print("✅")
+            # print(crawled)
+    return crawled, index
 
-seed = "https://engoo.com/"
-crawl_web(seed)
+seed = "https://searchengineplaces.com.tr/"
+crawled, index = crawl_web(seed)
+
+# print("⏩")
+# print(crawled)
+# print("🎃")
+print(index)
